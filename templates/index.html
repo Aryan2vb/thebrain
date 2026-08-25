@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>THEBRAIN</title>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml" />
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.svg') }}" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Anton&family=Manrope:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <div class="grain" aria-hidden="true"></div>
+    <main>
+      <header class="mast">
+        <p class="brand">THEBRAIN</p>
+        <h1>Who is in this picture.</h1>
+        <p class="lede">
+          Enroll a name with a front-face photo, then drop a picture and we box
+          everyone we know. Use JPG, PNG, or WebP.
+        </p>
+        <div class="cta">
+          <button type="button" class="mode is-on" data-mode="enroll">Enroll a face</button>
+          <button type="button" class="mode" data-mode="identify">Read a photo</button>
+        </div>
+        <p class="roster" id="roster">On file: loading…</p>
+        <p class="status" id="status">Warming the model…</p>
+      </header>
+    </main>
+
+    <section class="stage" id="stage">
+      <form id="enroll-form" class="stage-form" autocomplete="off">
+        <label class="name-field">
+          <span>Name</span>
+          <input id="person-name" name="name" type="text" placeholder="Aryan" required />
+        </label>
+        <label class="drop" id="enroll-drop">
+          <input id="enroll-file" type="file" accept="image/*" hidden />
+          <span>Drop a front-face photo (JPG / PNG / WebP), or click to choose.</span>
+        </label>
+        <button type="submit" class="go">Save this person</button>
+      </form>
+
+      <form id="identify-form" class="stage-form is-hidden" autocomplete="off">
+        <label class="drop drop-bleed" id="identify-drop">
+          <input id="identify-file" type="file" accept="image/*" hidden />
+          <span>Drop a group photo (JPG / PNG / WebP). We’ll name every face we can.</span>
+        </label>
+      </form>
+
+      <img id="result" class="result" alt="Identified faces" hidden />
+    </section>
+
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+  </body>
+</html>

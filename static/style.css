@@ -1,0 +1,239 @@
+:root {
+  --ink: #1a2416;
+  --wash-a: #c5d6b0;
+  --wash-b: #ead7a8;
+  --wash-c: #f3efe4;
+  --mark: #c43c22;
+  --line: rgba(26, 36, 22, 0.28);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+body {
+  color: var(--ink);
+  font-family: Manrope, sans-serif;
+  background:
+    radial-gradient(1200px 700px at 8% -10%, var(--wash-a), transparent 55%),
+    radial-gradient(900px 800px at 110% 20%, var(--wash-b), transparent 50%),
+    linear-gradient(165deg, var(--wash-c), var(--wash-a) 70%);
+}
+
+.grain {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  opacity: 0.18;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+}
+
+main {
+  padding: 7vh 6vw 2vh;
+}
+
+.brand {
+  margin: 0 0 0.15em;
+  font-family: Anton, sans-serif;
+  font-size: clamp(4.4rem, 14vw, 10rem);
+  line-height: 0.82;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  animation: brand-in 1.1s ease both;
+}
+
+h1 {
+  margin: 0;
+  max-width: 14ch;
+  font-family: Anton, sans-serif;
+  font-size: clamp(1.8rem, 4vw, 3.1rem);
+  font-weight: 400;
+  line-height: 0.95;
+  letter-spacing: 0.01em;
+}
+
+.lede {
+  margin: 1rem 0 1.6rem;
+  max-width: 34rem;
+  font-size: 1.05rem;
+  line-height: 1.45;
+}
+
+.cta {
+  display: flex;
+  gap: 1.6rem;
+  margin-bottom: 1.1rem;
+}
+
+.mode {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  opacity: 0.45;
+}
+
+.mode.is-on {
+  opacity: 1;
+  box-shadow: inset 0 -0.12em 0 var(--mark);
+}
+
+.roster,
+.status {
+  margin: 0.35rem 0 0;
+  font-size: 0.92rem;
+}
+
+.status {
+  min-height: 1.3em;
+}
+
+.stage {
+  position: relative;
+  min-height: 52vh;
+  margin-top: 4vh;
+}
+
+.stage-form {
+  display: grid;
+  gap: 1rem;
+  padding: 0 6vw 8vh;
+}
+
+.stage-form.is-hidden {
+  display: none;
+}
+
+.name-field {
+  display: grid;
+  gap: 0.35rem;
+  max-width: 22rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.name-field input {
+  width: 100%;
+  padding: 0.7rem 0;
+  border: 0;
+  border-bottom: 1px solid var(--ink);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 1.15rem;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.name-field input:focus {
+  outline: none;
+  border-bottom-color: var(--mark);
+}
+
+.drop {
+  display: grid;
+  place-items: center;
+  min-height: 28vh;
+  border: 1px dashed var(--line);
+  cursor: pointer;
+  text-align: center;
+  padding: 2rem;
+  animation: drop-breathe 3.2s ease-in-out infinite;
+}
+
+.drop.is-over {
+  border-color: var(--ink);
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.drop-bleed {
+  min-height: 42vh;
+}
+
+.go {
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--mark);
+  font: inherit;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.result {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 78vh;
+  object-fit: contain;
+  object-position: center top;
+  background: #11180f;
+  animation: reveal 0.55s ease both;
+}
+
+.is-busy .drop span::after {
+  content: " Working…";
+}
+
+@keyframes brand-in {
+  from {
+    letter-spacing: 0.22em;
+    opacity: 0;
+  }
+  to {
+    letter-spacing: 0.04em;
+    opacity: 1;
+  }
+}
+
+@keyframes drop-breathe {
+  0%,
+  100% {
+    border-color: var(--line);
+  }
+  50% {
+    border-color: rgba(26, 36, 22, 0.55);
+  }
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (max-width: 700px) {
+  main {
+    padding: 5vh 5vw 1vh;
+  }
+
+  .cta {
+    flex-direction: column;
+    gap: 0.7rem;
+  }
+
+  .stage-form {
+    padding: 0 5vw 6vh;
+  }
+}
