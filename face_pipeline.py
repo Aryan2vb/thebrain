@@ -69,8 +69,25 @@ def init_insightface() -> FaceAnalysis:
     return app
 
 
-def open_capture(index: int = 0, width: int = CAPTURE_WIDTH, height: int = CAPTURE_HEIGHT) -> cv2.VideoCapture:
-    """Open a camera and request 1080p so distant faces keep more pixels."""
+def open_capture(
+    source: int | str = 0,
+    width: int = CAPTURE_WIDTH,
+    height: int = CAPTURE_HEIGHT,
+) -> cv2.VideoCapture:
+    """Open a camera index or RTSP/HTTP URL. Request 1080p on local cameras only."""
+    if isinstance(source, str) and source.lower().startswith(
+        ("rtsp://", "rtsps://", "http://", "https://", "rtmp://")
+    ):
+        # TCP + no decoder buffer so the window tracks the live camera, not a delayed queue.
+        os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = (
+            "rtsp_transport;tcp|fflags;nobuffer|flags;low_delay|max_delay;0"
+        )
+        cap = cv2.VideoCapture(source, cv2.CAP_FFMPEG)
+        if cap.isOpened():
+            cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+        return cap
+
+    index = int(source) if isinstance(source, str) else source
     cap = cv2.VideoCapture(index)
     if not cap.isOpened():
         return cap
@@ -378,6 +395,26 @@ class OrientationTracker:
                 return faces
         return []
 
+    def detect_live(self, app: FaceAnalysis, frame: np.ndarray) -> list[Face]:
+        """Faster live path: one downscaled SCRFD pass, last-known rotation first."""
+        work, scale = resize_still(frame)
+        work_h, work_w = work.shape[:2]
+        ordered = (self.angle,) + tuple(a for a in ORIENTATIONS if a != self.angle)
+        for angle in ordered:
+            rotated = _rotate_bgr(work, angle)
+            boxes = detect_boxes(app, rotated)
+            if not boxes:
+                continue
+            embed_faces_batch(app, rotated, boxes, min_px=1)
+            mapped = [_map_face_from_rotated(face, work_w, work_h, angle) for face in boxes]
+            if scale != 1.0:
+                sx = frame.shape[1] / float(work_w)
+                sy = frame.shape[0] / float(work_h)
+                mapped = [_scale_face_xy(face, sx, sy) for face in mapped]
+            self.angle = angle
+            return _nms(mapped)
+        return []
+
 
 def bgr_from_bytes(data: bytes) -> np.ndarray:
     """Decode an uploaded image, honoring EXIF orientation."""
@@ -451,14 +488,16 @@ def _label_font(size: int) -> ImageFont.ImageFont:
 
 
 def annotate_identities(frame: np.ndarray, labels: list[dict]) -> np.ndarray:
-    """Draw named boxes onto a BGR image for the GUI result view."""
+    """Draw named boxes for known matches only."""
     rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     im = Image.fromarray(rgb)
     draw = ImageDraw.Draw(im)
     font = _label_font(max(16, int(im.width / 55)))
     for item in labels:
+        if not item.get("known"):
+            continue
         x1, y1, x2, y2 = (int(item["x1"]), int(item["y1"]), int(item["x2"]), int(item["y2"]))
-        color = (24, 140, 72) if item["known"] else (196, 48, 38)
+        color = (24, 140, 72)
         draw.rectangle([x1, y1, x2, y2], outline=color, width=max(2, im.width // 400))
         text = item["text"]
         bbox = draw.textbbox((0, 0), text, font=font)
@@ -473,7 +512,7 @@ def annotate_identities(frame: np.ndarray, labels: list[dict]) -> np.ndarray:
 
 
 def identify_frame(app: FaceAnalysis, frame: np.ndarray, db: dict) -> tuple[np.ndarray, list[dict]]:
-    """Detect (rotation-aware, still-optimized), match, and return annotated image + labels."""
+    """Detect faces; return image annotated with known matches only (no Unknown boxes)."""
     known_names, known_embeddings = flatten_db(db)
     faces = detect_faces_in_still(app, frame)
     labels: list[dict] = []
@@ -481,22 +520,23 @@ def identify_frame(app: FaceAnalysis, frame: np.ndarray, db: dict) -> tuple[np.n
         embedding = None
         if face.normed_embedding is not None:
             embedding = np.asarray(face.normed_embedding, dtype=np.float32)
+        if embedding is None:
+            continue
+        name, score, known = match_embedding(
+            embedding, known_names, known_embeddings, threshold=STILL_MATCH_THRESHOLD
+        )
+        if not known:
+            continue
         px = int(face_short_side(face))
         x1, y1, x2, y2 = [int(v) for v in face.bbox]
-        if embedding is None:
-            name, score, known = "Unknown", 0.0, False
-        else:
-            name, score, known = match_embedding(
-                embedding, known_names, known_embeddings, threshold=STILL_MATCH_THRESHOLD
-            )
-        text = f"{name} {float(score):.2f}" if score else name
+        text = f"{name} {float(score):.2f}"
         if px < LOW_RES_PX:
             text = f"{text} LOW-RES"
         labels.append(
             {
                 "name": str(name),
                 "score": float(score),
-                "known": bool(known),
+                "known": True,
                 "px": px,
                 "x1": x1,
                 "y1": y1,

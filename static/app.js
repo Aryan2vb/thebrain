@@ -112,8 +112,8 @@ async function identifyFilePair(file) {
   const took = data.seconds != null ? ` (${data.seconds}s)` : "";
   setStatus(
     names.length
-      ? `Found ${names.length}: ${names.join(", ")}${took}`
-      : `No faces found in that photo.${took}`
+      ? `Identified ${names.length}: ${names.join(", ")}${took}`
+      : `No enrolled people found in that photo.${took}`
   );
   identifyFile.value = "";
 }
